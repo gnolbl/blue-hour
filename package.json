@@ -1,0 +1,20 @@
+{
+  "name": "blue-hour-auth-server",
+  "version": "1.0.0",
+  "description": "Server đăng ký / đăng nhập cho Blue Hour Learning AI",
+  "main": "server.js",
+  "scripts": {
+  "start": "node --env-file=.env server.js",
+  "dev": "node --watch --env-file=.env server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.6",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.4.0",
+    "jsonwebtoken": "^9.0.2"
+  }
+}

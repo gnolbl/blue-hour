@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="vi" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đăng Nhập & Đăng Ký - Blue Hour Learning AI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+ 
+  <script>
+    // Tự động kiểm tra phiên đăng nhập và trạng thái kế hoạch học tập
+    (async () => {
+      try {
+        const { user } = await api('/api/me');
+        showWelcome(user);
+        
+        // Kiểm tra nếu user đã từng hoàn thành việc lập kế hoạch study-plan
+        const hasCompletedPlan = localStorage.getItem('hasCompletedPlan');
+        if (hasCompletedPlan === 'true') {
+          setTimeout(() => {
+          window.location.href = 'study.html';
+          }, 800); // Chuyển hướng mượt mà sau khi nhận diện phiên đăng nhập hợp lệ
+        }
+      } catch {}
+    })();
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+          colors: {
+            brand: {
+              50: '#eff6ff', 100: '#dbeafe', 200: '#bfdbfe', 300: '#93c5fd',
+              400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8',
+              800: '#1e40af', 900: '#1e3a8a', 950: '#172554',
+            }
+          },
+          boxShadow: {
+            'glow-blue': '0 0 25px -5px rgba(59, 130, 246, 0.4), 0 8px 10px -6px rgba(30, 64, 175, 0.2)',
+            'glow-cyan': '0 0 30px -5px rgba(6, 182, 212, 0.3)',
+          }
+        }
+      }
+    }
+  </script>
+ 
+  <style>
+    b.g-animated {
+      background: linear-gradient(-45deg, #0f172a, #1e3a8a, #1e40af, #0f172a);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    .glass-card {
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+    .glass-input {
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .glass-input:focus-within {
+      background: rgba(30, 41, 59, 0.9);
+      border-color: #3b82f6;
+      box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+    }
+    .tab-content { transition: opacity 0.3s ease, transform 0.3s ease; }
+    .tab-content.hidden-tab { display: none; opacity: 0; transform: translateY(10px); }
+    #toast { transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.4s ease; }
+    button:disabled { opacity: .6; cursor: not-allowed; }
+  </style>
+</head>
+<body class="h-full bg-animated font-sans text-slate-100 flex items-center justify-center p-4 sm:p-6 overflow-x-hidden relative">
+ 
+  <div class="fixed top-1/4 left-1/4 w-72 h-72 sm:w-96 sm:h-96 bg-brand-500/20 rounded-full blur-3xl pointer-events-none -z-10 animate-pulse"></div>
+  <div class="fixed bottom-1/4 right-1/4 w-80 h-80 sm:w-96 sm:h-96 bg-cyan-500/15 rounded-full blur-3xl pointer-events-none -z-10"></div>
+ 
+  <main class="w-full max-w-md my-auto">
+ 
+    <div class="text-center mb-6 sm:mb-8">
+      <div class="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-tr from-brand-700 via-brand-500 to-cyan-400 p-0.5 shadow-glow-blue mb-3">
+        <div class="w-full h-full bg-slate-900/90 rounded-[14px] flex items-center justify-center">
+          <i class="fa-solid fa-moon text-brand-400 text-2xl sm:text-3xl"></i>
+        </div>
+      </div>
+      <h1 class="text-2xl sm:text-3xl font-bold tracking-tight bg-gradient-to-r from-white via-slate-100 to-brand-200 bg-clip-text text-transparent">Blue Hour</h1>
+      <p class="text-slate-400 text-xs sm:text-sm mt-1">Nền tảng AI hỗ trợ học tập & tối ưu thời gian</p>
+    </div>
+ 
+    <div class="glass-card rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+      <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-brand-600 via-cyan-400 to-brand-400"></div>
+ 
+      <div id="tabs" class="flex bg-slate-900/70 p-1.5 rounded-xl border border-white/5 mb-6 sm:mb-8 relative">
+        <button id="tab-login-btn" onclick="switchTab('login')" class="flex-1 py-2.5 text-xs sm:text-sm font-semibold rounded-lg transition-all duration-300 text-white bg-brand-600 shadow-md">
+          <i class="fa-solid fa-right-to-bracket mr-2"></i>Đăng Nhập
+        </button>
+        <button id="tab-register-btn" onclick="switchTab('register')" class="flex-1 py-2.5 text-xs sm:text-sm font-medium rounded-lg transition-all duration-300 text-slate-400 hover:text-white">
+          <i class="fa-solid fa-user-plus mr-2"></i>Đăng Ký
+        </button>
+      </div>
+ 
+      <!-- ================= LOGIN FORM ================= -->
+      <div id="login-form-container" class="tab-content">
+        <div class="mb-6">
+          <h2 class="text-xl font-bold text-white">Chào mừng trở lại! 👋</h2>
+          <p class="text-xs text-slate-400 mt-1">Vui lòng nhập thông tin để truy cập tài khoản của bạn</p>
+        </div>
+ 
+        <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1.5">Tên đăng nhập</label>
+            <div class="glass-input rounded-xl flex items-center px-3.5 py-2.5 focus-within:ring-2 focus-within:ring-brand-500/50">
+              <i class="fa-regular fa-user text-slate-400 text-sm mr-3"></i>
+              <input type="text" id="login-username" required placeholder="Nhập tên đăng nhập" autocomplete="username" autocapitalize="none" spellcheck="false" class="w-full bg-transparent text-sm text-white focus:outline-none placeholder-slate-500">
+            </div>
+          </div>
+ 
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <label class="block text-xs font-medium text-slate-300">Mật khẩu</label>
+              <a href="#" onclick="event.preventDefault(); showToast('Tính năng quên mật khẩu chưa được hỗ trợ', 'info')" class="text-xs font-medium text-brand-400 hover:text-brand-300 hover:underline transition">Quên mật khẩu?</a>
+            </div>
+            <div class="glass-input rounded-xl flex items-center px-3.5 py-2.5 focus-within:ring-2 focus-within:ring-brand-500/50">
+              <i class="fa-solid fa-lock text-slate-400 text-sm mr-3"></i>
+              <input type="password" id="login-password" required placeholder="••••••••" autocomplete="current-password" class="w-full bg-transparent text-sm text-white focus:outline-none placeholder-slate-500">
+              <button type="button" onclick="togglePasswordVisibility('login-password', this)" class="text-slate-400 hover:text-slate-200 focus:outline-none ml-2">
+                <i class="fa-regular fa-eye text-sm"></i>
+              </button>
+            </div>
+          </div>
+ 
+          <div class="flex items-center justify-between py-1">
+            <label class="flex items-center cursor-pointer group">
+              <input type="checkbox" id="login-remember" class="w-4 h-4 rounded bg-slate-800 border-slate-600 text-brand-600 focus:ring-brand-500 focus:ring-offset-slate-900 cursor-pointer">
+              <span class="ml-2.5 text-xs text-slate-300 group-hover:text-white transition">Ghi nhớ đăng nhập</span>
+            </label>
+          </div>
+ 
+          <button id="login-submit" type="submit" class="w-full py-3 px-4 bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 text-white font-semibold text-sm rounded-xl shadow-glow-blue transition-all duration-300 transform active:scale-[0.99] flex items-center justify-center">
+            <span>Đăng Nhập</span>
+            <i class="fa-solid fa-arrow-right ml-2 text-xs"></i>
+          </button>
+        </form>
+      </div>
+ 
+      <!-- ================= REGISTER FORM ================= -->
+      <div id="register-form-container" class="tab-content hidden-tab">
+        <div class="mb-5">
+          <h2 class="text-xl font-bold text-white">Tham gia Blue Hour 🚀</h2>
+          <p class="text-xs text-slate-400 mt-1">Khám phá trải nghiệm học tập thông minh cùng AI</p>
+        </div>
+ 
+        <form id="register-form" onsubmit="handleRegister(event)" class="space-y-3.5">
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Họ và Tên</label>
+            <div class="glass-input rounded-xl flex items-center px-3.5 py-2.5 focus-within:ring-2 focus-within:ring-brand-500/50">
+              <i class="fa-regular fa-user text-slate-400 text-sm mr-3"></i>
+              <input type="text" id="reg-name" required minlength="2" placeholder="Nguyễn Văn A" autocomplete="name" class="w-full bg-transparent text-sm text-white focus:outline-none placeholder-slate-500">
+            </div>
+          </div>
+ 
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Tên đăng nhập</label>
+            <div class="glass-input rounded-xl flex items-center px-3.5 py-2.5 focus-within:ring-2 focus-within:ring-brand-500/50">
+              <i class="fa-solid fa-at text-slate-400 text-sm mr-3"></i>
+              <input type="text" id="reg-username" required minlength="3" maxlength="30" pattern="[A-Za-z0-9._\-]{3,30}" title="3-30 ký tự: chữ không dấu, số, dấu chấm, gạch dưới, gạch ngang" placeholder="3-30 ký tự, viết liền không dấu" autocomplete="username" autocapitalize="none" spellcheck="false" class="w-full bg-transparent text-sm text-white focus:outline-none placeholder-slate-500">
+            </div>
+          </div>
+ 
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Mật khẩu</label>
+            <div class="glass-input rounded-xl flex items-center px-3.5 py-2.5 focus-within:ring-2 focus-within:ring-brand-500/50">
+              <i class="fa-solid fa-lock text-slate-400 text-sm mr-3"></i>
+              <input type="password" id="reg-password" oninput="checkPasswordStrength(this.value)" required minlength="6" placeholder="Ít nhất 6 ký tự" autocomplete="new-password" class="w-full bg-transparent text-sm text-white focus:outline-none placeholder-slate-500">
+              <button type="button" onclick="togglePasswordVisibility('reg-password', this)" class="text-slate-400 hover:text-slate-200 focus:outline-none ml-2">
+                <i class="fa-regular fa-eye text-sm"></i>
+              </button>
+            </div>
+ 
+            <div id="strength-container" class="mt-2 hidden">
+              <div class="flex justify-between items-center mb-1">
+                <span class="text-[10px] text-slate-400">Độ mạnh mật khẩu:</span>
+                <span id="strength-text" class="text-[10px] font-semibold text-slate-400">Yếu</span>
+              </div>
+              <div class="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden flex gap-1">
+                <div id="bar-1" class="h-full w-1/3 bg-slate-700 transition-all duration-300"></div>
+                <div id="bar-2" class="h-full w-1/3 bg-slate-700 transition-all duration-300"></div>
+                <div id="bar-3" class="h-full w-1/3 bg-slate-700 transition-all duration-300"></div>
+              </div>
+            </div>
+          </div>
+ 
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Xác nhận Mật khẩu</label>
+            <div class="glass-input rounded-xl flex items-center px-3.5 py-2.5 focus-within:ring-2 focus-within:ring-brand-500/50">
+              <i class="fa-solid fa-shield-halved text-slate-400 text-sm mr-3"></i>
+              <input type="password" id="reg-confirm-password" required placeholder="Nhập lại mật khẩu" autocomplete="new-password" class="w-full bg-transparent text-sm text-white focus:outline-none placeholder-slate-500">
+            </div>
+          </div>
+ 
+          <button id="register-submit" type="submit" class="w-full py-3 px-4 bg-gradient-to-r from-brand-600 via-brand-500 to-cyan-500 hover:from-brand-500 hover:to-cyan-400 text-white font-semibold text-sm rounded-xl shadow-glow-blue transition-all duration-300 transform active:scale-[0.99] flex items-center justify-center">
+            <span>Tạo Tài Khoản</span>
+            <i class="fa-solid fa-user-check ml-2 text-xs"></i>
+          </button>
+        </form>
+      </div>
+ 
+      <!-- ================= LOGGED-IN VIEW ================= -->
+      <div id="welcome-container" class="tab-content hidden-tab text-center">
+        <div class="w-16 h-16 mx-auto rounded-full bg-emerald-500/20 flex items-center justify-center mb-4">
+          <i class="fa-solid fa-circle-check text-emerald-400 text-3xl"></i>
+        </div>
+        <h2 class="text-xl font-bold text-white">Xin chào, <span id="welcome-name"></span>!</h2>
+        <p id="welcome-email" class="text-xs text-slate-400 mt-1 mb-6"></p>
+        <button onclick="handleLogout()" class="w-full py-3 px-4 glass-input rounded-xl text-sm font-semibold text-slate-200 hover:bg-slate-800/80 transition">
+          <i class="fa-solid fa-right-from-bracket mr-2"></i>Đăng xuất
+        </button>
+      </div>
+ 
+    </div>
+ 
+    <p class="text-center text-xs text-slate-500 mt-6">&copy; 2026 Blue Hour AI. Bảo lưu mọi quyền.</p>
+  </main>
+ 
+  <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 pointer-events-none transition-all duration-300">
+    <div id="toast-content" class="flex items-center gap-3 px-4 py-3 rounded-2xl glass-card shadow-2xl border border-white/20 text-xs sm:text-sm text-white">
+      <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
+      <span id="toast-message">Thông báo hệ thống</span>
+    </div>
+  </div>
+ 
+  <script>
+    // ---------- API helper ----------
+    async function api(path, options = {}) {
+      let res;
+      try {
+        res = await fetch(path, {
+          method: options.method || 'GET',
+          headers: { 'Content-Type': 'application/json' },
+          body: options.body ? JSON.stringify(options.body) : undefined,
+          credentials: 'same-origin',
+        });
+      } catch {
+        throw new Error('Không kết nối được tới máy chủ');
+      }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Đã có lỗi xảy ra');
+      return data;
+    }
+ 
+    function setBusy(btnId, busy) {
+      document.getElementById(btnId).disabled = busy;
+    }
+ 
+    // ---------- Tabs ----------
+    function switchTab(tab) {
+      const loginTabBtn = document.getElementById('tab-login-btn');
+      const registerTabBtn = document.getElementById('tab-register-btn');
+      const loginForm = document.getElementById('login-form-container');
+      const registerForm = document.getElementById('register-form-container');
+      document.getElementById('welcome-container').classList.add('hidden-tab');
+      document.getElementById('tabs').classList.remove('hidden');
+ 
+      const on = "flex-1 py-2.5 text-xs sm:text-sm font-semibold rounded-lg transition-all duration-300 text-white bg-brand-600 shadow-md";
+      const off = "flex-1 py-2.5 text-xs sm:text-sm font-medium rounded-lg transition-all duration-300 text-slate-400 hover:text-white";
+ 
+      if (tab === 'login') {
+        loginTabBtn.className = on; registerTabBtn.className = off;
+        loginForm.classList.remove('hidden-tab'); registerForm.classList.add('hidden-tab');
+      } else {
+        registerTabBtn.className = on; loginTabBtn.className = off;
+        registerForm.classList.remove('hidden-tab'); loginForm.classList.add('hidden-tab');
+      }
+    }
+ 
+    function showWelcome(user) {
+      document.getElementById('login-form-container').classList.add('hidden-tab');
+      document.getElementById('register-form-container').classList.add('hidden-tab');
+      document.getElementById('tabs').classList.add('hidden');
+      document.getElementById('welcome-name').textContent = user.fullName;
+      document.getElementById('welcome-email').textContent = '@' + user.username;
+      document.getElementById('welcome-container').classList.remove('hidden-tab');
+    }
+ 
+    function togglePasswordVisibility(inputId, btn) {
+      const input = document.getElementById(inputId);
+      const icon = btn.querySelector('i');
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fa-regular fa-eye-slash text-brand-400 text-sm';
+      } else {
+        input.type = 'password';
+        icon.className = 'fa-regular fa-eye text-slate-400 text-sm';
+      }
+    }
+ 
+    function checkPasswordStrength(password) {
+      const strengthContainer = document.getElementById('strength-container');
+      const strengthText = document.getElementById('strength-text');
+      const bars = [1, 2, 3].map(i => document.getElementById('bar-' + i));
+ 
+      if (!password) { strengthContainer.classList.add('hidden'); return; }
+      strengthContainer.classList.remove('hidden');
+ 
+      let score = 0;
+      if (password.length >= 6) score++;
+      if (password.length >= 8 && /[A-Z]/.test(password) && /[0-9]/.test(password)) score++;
+      if (password.length >= 10 && /[^A-Za-z0-9]/.test(password)) score++;
+ 
+      bars.forEach(b => b.className = "h-full w-1/3 transition-all duration-300 bg-slate-700");
+ 
+      if (score <= 1 || password.length < 6) {
+        strengthText.innerText = "Yếu";
+        strengthText.className = "text-[10px] font-semibold text-rose-400";
+        bars[0].classList.add('bg-rose-500');
+      } else if (score === 2) {
+        strengthText.innerText = "Trung bình";
+        strengthText.className = "text-[10px] font-semibold text-amber-400";
+        bars[0].classList.add('bg-amber-400'); bars[1].classList.add('bg-amber-400');
+      } else {
+        strengthText.innerText = "Rất mạnh 🔥";
+        strengthText.className = "text-[10px] font-semibold text-emerald-400";
+        bars.forEach(b => b.classList.add('bg-emerald-400'));
+      }
+    }
+ 
+    // ---------- Form handlers (gọi server) ----------
+    async function handleLogin(e) {
+      e.preventDefault();
+      setBusy('login-submit', true);
+      try {
+        const { user } = await api('/api/login', {
+          method: 'POST',
+          body: {
+            username: document.getElementById('login-username').value,
+            password: document.getElementById('login-password').value,
+            remember: document.getElementById('login-remember').checked,
+          },
+        });
+        
+        showToast(`Đăng nhập thành công! Chào mừng ${user.fullName}`, 'success');
+        document.getElementById('login-form').reset();
+        
+        // Kiểm tra xem người dùng đã có kế hoạch học tập lưu trước đó chưa
+        setTimeout(() => {
+          const hasCompletedPlan = localStorage.getItem('hasCompletedPlan');
+          if (hasCompletedPlan === 'true') {
+            // Nếu đã có cấu hình -> Chuyển thẳng tới trang study.html
+            window.location.href = 'study.html';
+          } else {
+            // Nếu chưa từng lập kế hoạch -> Chuyển hướng tới trang study-plan.html
+            window.location.href = 'study-plan.html';
+          }
+        }, 1000);
+        
+      } catch (err) {
+        showToast(err.message, 'error');
+      } finally {
+        setBusy('login-submit', false);
+      }
+    }
+ 
+    async function handleRegister(e) {
+      e.preventDefault();
+      const pwd = document.getElementById('reg-password').value;
+      const confirmPwd = document.getElementById('reg-confirm-password').value;
+ 
+      if (pwd !== confirmPwd) {
+        showToast('Mật khẩu xác nhận không khớp. Vui lòng kiểm tra lại!', 'error');
+        return;
+      }
+ 
+      setBusy('register-submit', true);
+      try {
+        const username = document.getElementById('reg-username').value;
+        await api('/api/register', {
+          method: 'POST',
+          body: { fullName: document.getElementById('reg-name').value, username, password: pwd },
+        });
+        showToast('Đăng ký tài khoản thành công! Hãy đăng nhập.', 'success');
+        document.getElementById('register-form').reset();
+        document.getElementById('strength-container').classList.add('hidden');
+        document.getElementById('login-username').value = username;
+        setTimeout(() => switchTab('login'), 1200);
+      } catch (err) {
+        showToast(err.message, 'error');
+      } finally {
+        setBusy('register-submit', false);
+      }
+    }
+ 
+    async function handleLogout() {
+      try { await api('/api/logout', { method: 'POST' }); } catch {}
+      switchTab('login');
+      showToast('Đã đăng xuất', 'info');
+    }
+ 
+    // ---------- Toast ----------
+    let toastTimeout;
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toast');
+      const toastIcon = document.getElementById('toast-icon');
+      clearTimeout(toastTimeout);
+      document.getElementById('toast-message').innerText = message;
+ 
+      if (type === 'success') toastIcon.className = 'fa-solid fa-circle-check text-emerald-400 text-lg';
+      else if (type === 'error') toastIcon.className = 'fa-solid fa-circle-xmark text-rose-400 text-lg';
+      else toastIcon.className = 'fa-solid fa-circle-info text-brand-400 text-lg';
+ 
+      toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+      toast.classList.add('translate-y-0', 'opacity-100');
+      toastTimeout = setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+      }, 3500);
+    }
+  </script>
+</body>
+</html>

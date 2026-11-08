@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giao Diện Học Tập theo Môn</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .sheet-tab.active {
+            background-color: #ffffff;
+            color: #1e40af;
+            font-weight: 700;
+            border-top: 3px solid #2563eb;
+            box-shadow: 0 -2px 5px rgba(0,0,0,0.05);
+        }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen flex flex-col font-sans text-slate-800">
+
+    <!-- TOP NAVBAR -->
+        <header class="bg-blue-900 text-white px-4 py-3 flex items-center justify-between shadow-md relative z-20">
+            <div class="flex items-center space-x-4">
+                <!-- Nút Thư Mục (Folder Dropdown) -->
+                <div class="relative">
+                    <button id="folderBtn" onclick="toggleFolderMenu()" class="flex items-center space-x-2 bg-blue-800 hover:bg-blue-700 px-3 py-2 rounded-lg transition text-sm font-medium border border-blue-600">
+                        <i class="fa-solid fa-folder-open text-yellow-400 text-lg"></i>
+                        <span>Thư mục môn học</span>
+                        <i class="fa-solid fa-chevron-down text-xs opacity-75 ml-1"></i>
+                    </button>
+
+                    <!-- Menu xổ xuống các môn đã chọn -->
+                    <div id="folderDropdown" class="hidden absolute top-full left-0 mt-2 w-72 max-h-96 overflow-y-auto bg-white rounded-xl shadow-2xl border border-slate-200 py-2 text-slate-800 z-30">
+                        <div class="px-3 py-1.5 text-xs font-semibold text-slate-400 uppercase tracking-wider">Danh sách môn học</div>
+                        <button onclick="switchSheet('toan')" class="w-full text-left px-4 py-2.5 hover:bg-blue-50 flex items-center space-x-3 text-slate-700 hover:text-blue-600 transition">
+                            <i class="fa-solid fa-calculator text-blue-600 w-5"></i>
+                            <span>Môn Toán</span>
+                        </button>
+                        <button onclick="switchSheet('li')" class="w-full text-left px-4 py-2.5 hover:bg-blue-50 flex items-center space-x-3 text-slate-700 hover:text-indigo-600 transition">
+                            <i class="fa-solid fa-atom text-indigo-600 w-5"></i>
+                            <span>Môn Vật Lý</span>
+                        </button>
+                        <button onclick="switchSheet('hoa')" class="w-full text-left px-4 py-2.5 hover:bg-blue-50 flex items-center space-x-3 text-slate-700 hover:text-teal-600 transition">
+                            <i class="fa-solid fa-flask text-teal-600 w-5"></i>
+                            <span>Môn Hóa Học</span>
+                        </button>
+                        <button onclick="switchSheet('anh')" class="w-full text-left px-4 py-2.5 hover:bg-blue-50 flex items-center space-x-3 text-slate-700 hover:text-cyan-600 transition">
+                            <i class="fa-solid fa-language text-cyan-600 w-5"></i>
+                            <span>Môn Tiếng Anh</span>
+                        </button>
+                        <button onclick="switchSheet('van')" class="w-full text-left px-4 py-2.5 hover:bg-blue-50 flex items-center space-x-3 text-slate-700 hover:text-rose-600 transition">
+                            <i class="fa-solid fa-book-open text-rose-600 w-5"></i>
+                            <span>Môn Ngữ văn</span>
+                        </button>
+                        <button onclick="switchSheet('su')" class="w-full text-left px-4 py-2.5 hover:bg-blue-50 flex items-center space-x-3 text-slate-700 hover:text-amber-600 transition">
+                            <i class="fa-solid fa-landmark text-amber-600 w-5"></i>
+                            <span>Môn Lịch sử</span>
+                        </button>
+                        <button onclick="switchSheet('dia')" class="w-full text-left px-4 py-2.5 hover:bg-blue-50 flex items-center space-x-3 text-slate-700 hover:text-emerald-600 transition">
+                            <i class="fa-solid fa-earth-asia text-emerald-600 w-5"></i>
+                            <span>Môn Địa lí</span>
+                        </button>
+                        <button onclick="switchSheet('sinh')" class="w-full text-left px-4 py-2.5 hover:bg-blue-50 flex items-center space-x-3 text-slate-700 hover:text-green-600 transition">
+                            <i class="fa-solid fa-dna text-green-600 w-5"></i>
+                            <span>Môn Sinh học</span>
+                        </button>
+                        <button onclick="switchSheet('tin')" class="w-full text-left px-4 py-2.5 hover:bg-blue-50 flex items-center space-x-3 text-slate-700 hover:text-violet-600 transition">
+                            <i class="fa-solid fa-laptop-code text-violet-600 w-5"></i>
+                            <span>Môn Tin học</span>
+                        </button>
+                        <button onclick="switchSheet('ktpl')" class="w-full text-left px-4 py-2.5 hover:bg-blue-50 flex items-center space-x-3 text-slate-700 hover:text-orange-600 transition">
+                            <i class="fa-solid fa-scale-balanced text-orange-600 w-5"></i>
+                            <span>Môn Giáo dục kinh tế và pháp luật</span>
+                        </button>
+                        <button onclick="switchSheet('gdqp')" class="w-full text-left px-4 py-2.5 hover:bg-blue-50 flex items-center space-x-3 text-slate-700 hover:text-red-600 transition">
+                            <i class="fa-solid fa-shield-halved text-red-600 w-5"></i>
+                            <span>Môn Giáo dục quốc phòng và an ninh</span>
+                        </button>
+                        <button onclick="switchSheet('congnghe')" class="w-full text-left px-4 py-2.5 hover:bg-blue-50 flex items-center space-x-3 text-slate-700 hover:text-fuchsia-600 transition">
+                            <i class="fa-solid fa-gears text-fuchsia-600 w-5"></i>
+                            <span>Môn Công nghệ</span>
+                        </button>
+                    </div>
+                </div>
+
+                <h1 class="font-bold text-lg hidden sm:block">Không Gian Học Tập</h1>
+                <span id="gradeBadge" class="hidden text-xs bg-yellow-400 text-blue-900 font-bold px-3 py-1 rounded-full"></span>
+            </div>
+
+            <div class="flex items-center space-x-3">
+                <span class="text-xs bg-blue-800 px-3 py-1 rounded-full text-blue-200 hidden sm:inline-block">
+                    <i class="fa-solid fa-clock mr-1"></i> Đang trong phiên học
+                </span>
+                
+                <!-- Nút đổi kế hoạch -->
+                <button onclick="resetStudyPlan()" title="Thay đổi môn học và thời gian" class="flex items-center space-x-1.5 bg-blue-700 hover:bg-blue-600 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition border border-blue-500 shadow-sm">
+                    <i class="fa-solid fa-gear"></i>
+                    <span class="hidden md:inline">Đổi kế hoạch</span>
+                </button>
+            </div>
+        </header>
+
+    <!-- THANH KHU VỰC THẺ SHEET (GOOGLE SHEETS STYLE TABS) -->
+    <div class="bg-slate-200 border-b border-slate-300 px-4 pt-2 flex items-center space-x-1 overflow-x-auto">
+        <button id="tab-toan" onclick="switchSheet('toan')" class="sheet-tab active px-4 py-2 rounded-t-lg text-sm flex items-center space-x-2 transition text-slate-600 hover:bg-slate-50">
+            <i class="fa-solid fa-calculator text-blue-600"></i>
+            <span>Môn: Toán</span>
+        </button>
+        <button id="tab-li" onclick="switchSheet('li')" class="sheet-tab px-4 py-2 rounded-t-lg text-sm flex items-center space-x-2 transition text-slate-600 hover:bg-slate-50">
+            <i class="fa-solid fa-atom text-indigo-600"></i>
+            <span>Môn: Vật Lý</span>
+        </button>
+        <button id="tab-hoa" onclick="switchSheet('hoa')" class="sheet-tab px-4 py-2 rounded-t-lg text-sm flex items-center space-x-2 transition text-slate-600 hover:bg-slate-50">
+            <i class="fa-solid fa-flask text-teal-600"></i>
+            <span>Môn: Hóa Học</span>
+        </button>
+        <button id="tab-anh" onclick="switchSheet('anh')" class="sheet-tab px-4 py-2 rounded-t-lg text-sm flex items-center space-x-2 transition text-slate-600 hover:bg-slate-50">
+            <i class="fa-solid fa-language text-cyan-600"></i>
+            <span>Môn: Tiếng Anh</span>
+        </button>
+        <button id="tab-van" onclick="switchSheet('van')" class="sheet-tab shrink-0 whitespace-nowrap px-4 py-2 rounded-t-lg text-sm flex items-center space-x-2 transition text-slate-600 hover:bg-slate-50">
+            <i class="fa-solid fa-book-open text-rose-600"></i>
+            <span>Môn: Ngữ văn</span>
+        </button>
+        <button id="tab-su" onclick="switchSheet('su')" class="sheet-tab shrink-0 whitespace-nowrap px-4 py-2 rounded-t-lg text-sm flex items-center space-x-2 transition text-slate-600 hover:bg-slate-50">
+            <i class="fa-solid fa-landmark text-amber-600"></i>
+            <span>Môn: Lịch sử</span>
+        </button>
+        <button id="tab-dia" onclick="switchSheet('dia')" class="sheet-tab shrink-0 whitespace-nowrap px-4 py-2 rounded-t-lg text-sm flex items-center space-x-2 transition text-slate-600 hover:bg-slate-50">
+            <i class="fa-solid fa-earth-asia text-emerald-600"></i>
+            <span>Môn: Địa lí</span>
+        </button>
+        <button id="tab-sinh" onclick="switchSheet('sinh')" class="sheet-tab shrink-0 whitespace-nowrap px-4 py-2 rounded-t-lg text-sm flex items-center space-x-2 transition text-slate-600 hover:bg-slate-50">
+            <i class="fa-solid fa-dna text-green-600"></i>
+            <span>Môn: Sinh học</span>
+        </button>
+        <button id="tab-tin" onclick="switchSheet('tin')" class="sheet-tab shrink-0 whitespace-nowrap px-4 py-2 rounded-t-lg text-sm flex items-center space-x-2 transition text-slate-600 hover:bg-slate-50">
+            <i class="fa-solid fa-laptop-code text-violet-600"></i>
+            <span>Môn: Tin học</span>
+        </button>
+        <button id="tab-ktpl" onclick="switchSheet('ktpl')" class="sheet-tab shrink-0 whitespace-nowrap px-4 py-2 rounded-t-lg text-sm flex items-center space-x-2 transition text-slate-600 hover:bg-slate-50">
+            <i class="fa-solid fa-scale-balanced text-orange-600"></i>
+            <span>Môn: Giáo dục kinh tế và pháp luật</span>
+        </button>
+        <button id="tab-gdqp" onclick="switchSheet('gdqp')" class="sheet-tab shrink-0 whitespace-nowrap px-4 py-2 rounded-t-lg text-sm flex items-center space-x-2 transition text-slate-600 hover:bg-slate-50">
+            <i class="fa-solid fa-shield-halved text-red-600"></i>
+            <span>Môn: Giáo dục quốc phòng và an ninh</span>
+        </button>
+        <button id="tab-congnghe" onclick="switchSheet('congnghe')" class="sheet-tab shrink-0 whitespace-nowrap px-4 py-2 rounded-t-lg text-sm flex items-center space-x-2 transition text-slate-600 hover:bg-slate-50">
+            <i class="fa-solid fa-gears text-fuchsia-600"></i>
+            <span>Môn: Công nghệ</span>
+        </button>
+    </div>
+
+    <!-- MAIN WORKSPACE CONTENT (SHEETS CONTENT) -->
+    <main class="flex-1 p-6 pb-40 max-w-7xl w-full mx-auto">
+        
+        <!-- SHEET TOÁN -->
+        <div id="content-toan" class="sheet-content">
+            <div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-200">
+                <div class="flex items-center space-x-3 mb-4 pb-3 border-b border-slate-100">
+                    <i class="fa-solid fa-calculator text-2xl text-blue-600"></i>
+                    <h2 class="text-xl font-bold text-slate-800">Không gian môn Toán</h2>
+                </div>
+                <p class="text-slate-600 mb-4">Nội dung học tập, tài liệu và ghi chú riêng dành cho môn Toán.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="p-4 rounded-xl bg-blue-50 border border-blue-100">
+                        <h4 class="font-semibold text-blue-900 mb-1">Mục tiêu hôm nay</h4>
+                        <p class="text-sm text-blue-700">Giải 10 bài tập Đại số & Làm bài tập hình học chương 2.</p>
+                    </div>
+                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                        <h4 class="font-semibold text-slate-700 mb-1">Thời gian đã xếp</h4>
+                        <p class="text-sm text-slate-600">08:00 - 09:30</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SHEET VẬT LÝ -->
+        <div id="content-li" class="sheet-content hidden">
+            <div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-200">
+                <div class="flex items-center space-x-3 mb-4 pb-3 border-b border-slate-100">
+                    <i class="fa-solid fa-atom text-2xl text-indigo-600"></i>
+                    <h2 class="text-xl font-bold text-slate-800">Không gian môn Vật Lý</h2>
+                </div>
+                <p class="text-slate-600 mb-4">Nội dung học tập, tài liệu và ghi chú riêng dành cho môn Vật Lý.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="p-4 rounded-xl bg-indigo-50 border border-indigo-100">
+                        <h4 class="font-semibold text-indigo-900 mb-1">Mục tiêu hôm nay</h4>
+                        <p class="text-sm text-indigo-700">Ôn tập các công thức Chuyển động cơ học & Cơ học chất lưu.</p>
+                    </div>
+                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                        <h4 class="font-semibold text-slate-700 mb-1">Thời gian đã xếp</h4>
+                        <p class="text-sm text-slate-600">09:45 - 11:00</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SHEET HÓA HỌC -->
+        <div id="content-hoa" class="sheet-content hidden">
+            <div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-200">
+                <div class="flex items-center space-x-3 mb-4 pb-3 border-b border-slate-100">
+                    <i class="fa-solid fa-flask text-2xl text-teal-600"></i>
+                    <h2 class="text-xl font-bold text-slate-800">Không gian môn Hóa Học</h2>
+                </div>
+                <p class="text-slate-600 mb-4">Nội dung học tập, tài liệu và ghi chú riêng dành cho môn Hóa Học.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="p-4 rounded-xl bg-teal-50 border border-teal-100">
+                        <h4 class="font-semibold text-teal-900 mb-1">Mục tiêu hôm nay</h4>
+                        <p class="text-sm text-teal-700">Cân bằng phương trình Phản ứng Oxy hóa - Khử.</p>
+                    </div>
+                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                        <h4 class="font-semibold text-slate-700 mb-1">Thời gian đã xếp</h4>
+                        <p class="text-sm text-slate-600">14:00 - 15:30</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SHEET TIẾNG ANH -->
+        <div id="content-anh" class="sheet-content hidden">
+            <div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-200">
+                <div class="flex items-center space-x-3 mb-4 pb-3 border-b border-slate-100">
+                    <i class="fa-solid fa-language text-2xl text-cyan-600"></i>
+                    <h2 class="text-xl font-bold text-slate-800">Không gian môn Tiếng Anh</h2>
+                </div>
+                <p class="text-slate-600 mb-4">Nội dung học tập, tài liệu và ghi chú riêng dành cho môn Tiếng Anh.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="p-4 rounded-xl bg-cyan-50 border border-cyan-100">
+                        <h4 class="font-semibold text-cyan-900 mb-1">Mục tiêu hôm nay</h4>
+                        <p class="text-sm text-cyan-700">Học 20 từ vựng chủ đề Environment & Luyện Reading Part 2.</p>
+                    </div>
+                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                        <h4 class="font-semibold text-slate-700 mb-1">Thời gian đã xếp</h4>
+                        <p class="text-sm text-slate-600">16:00 - 17:30</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SHEET NGỮ VĂN -->
+        <div id="content-van" class="sheet-content hidden">
+            <div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-200">
+                <div class="flex items-center space-x-3 mb-4 pb-3 border-b border-slate-100">
+                    <i class="fa-solid fa-book-open text-2xl text-rose-600"></i>
+                    <h2 class="text-xl font-bold text-slate-800">Không gian môn Ngữ văn</h2>
+                </div>
+                <p class="text-slate-600 mb-4">Nội dung học tập, tài liệu và ghi chú riêng dành cho môn Ngữ văn.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="p-4 rounded-xl bg-rose-50 border border-rose-100">
+                        <h4 class="font-semibold text-rose-900 mb-1">Mục tiêu hôm nay</h4>
+                        <p class="text-sm text-rose-700">Ôn tập nội dung trọng tâm môn Ngữ văn.</p>
+                    </div>
+                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                        <h4 class="font-semibold text-slate-700 mb-1">Thời gian đã xếp</h4>
+                        <p class="text-sm text-slate-600">Chưa xếp lịch</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SHEET LỊCH SỬ -->
+        <div id="content-su" class="sheet-content hidden">
+            <div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-200">
+                <div class="flex items-center space-x-3 mb-4 pb-3 border-b border-slate-100">
+                    <i class="fa-solid fa-landmark text-2xl text-amber-600"></i>
+                    <h2 class="text-xl font-bold text-slate-800">Không gian môn Lịch sử</h2>
+                </div>
+                <p class="text-slate-600 mb-4">Nội dung học tập, tài liệu và ghi chú riêng dành cho môn Lịch sử.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="p-4 rounded-xl bg-amber-50 border border-amber-100">
+                        <h4 class="font-semibold text-amber-900 mb-1">Mục tiêu hôm nay</h4>
+                        <p class="text-sm text-amber-700">Ôn tập nội dung trọng tâm môn Lịch sử.</p>
+                    </div>
+                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                        <h4 class="font-semibold text-slate-700 mb-1">Thời gian đã xếp</h4>
+                        <p class="text-sm text-slate-600">Chưa xếp lịch</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SHEET ĐỊA LÍ -->
+        <div id="content-dia" class="sheet-content hidden">
+            <div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-200">
+                <div class="flex items-center space-x-3 mb-4 pb-3 border-b border-slate-100">
+                    <i class="fa-solid fa-earth-asia text-2xl text-emerald-600"></i>
+                    <h2 class="text-xl font-bold text-slate-800">Không gian môn Địa lí</h2>
+                </div>
+                <p class="text-slate-600 mb-4">Nội dung học tập, tài liệu và ghi chú riêng dành cho môn Địa lí.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-100">
+                        <h4 class="font-semibold text-emerald-900 mb-1">Mục tiêu hôm nay</h4>
+                        <p class="text-sm text-emerald-700">Ôn tập nội dung trọng tâm môn Địa lí.</p>
+                    </div>
+                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                        <h4 class="font-semibold text-slate-700 mb-1">Thời gian đã xếp</h4>
+                        <p class="text-sm text-slate-600">Chưa xếp lịch</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SHEET SINH HỌC -->
+        <div id="content-sinh" class="sheet-content hidden">
+            <div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-200">
+                <div class="flex items-center space-x-3 mb-4 pb-3 border-b border-slate-100">
+                    <i class="fa-solid fa-dna text-2xl text-green-600"></i>
+                    <h2 class="text-xl font-bold text-slate-800">Không gian môn Sinh học</h2>
+                </div>
+                <p class="text-slate-600 mb-4">Nội dung học tập, tài liệu và ghi chú riêng dành cho môn Sinh học.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="p-4 rounded-xl bg-green-50 border border-green-100">
+                        <h4 class="font-semibold text-green-900 mb-1">Mục tiêu hôm nay</h4>
+                        <p class="text-sm text-green-700">Ôn tập nội dung trọng tâm môn Sinh học.</p>
+                    </div>
+                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                        <h4 class="font-semibold text-slate-700 mb-1">Thời gian đã xếp</h4>
+                        <p class="text-sm text-slate-600">Chưa xếp lịch</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SHEET TIN HỌC -->
+        <div id="content-tin" class="sheet-content hidden">
+            <div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-200">
+                <div class="flex items-center space-x-3 mb-4 pb-3 border-b border-slate-100">
+                    <i class="fa-solid fa-laptop-code text-2xl text-violet-600"></i>
+                    <h2 class="text-xl font-bold text-slate-800">Không gian môn Tin học</h2>
+                </div>
+                <p class="text-slate-600 mb-4">Nội dung học tập, tài liệu và ghi chú riêng dành cho môn Tin học.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="p-4 rounded-xl bg-violet-50 border border-violet-100">
+                        <h4 class="font-semibold text-violet-900 mb-1">Mục tiêu hôm nay</h4>
+                        <p class="text-sm text-violet-700">Ôn tập nội dung trọng tâm môn Tin học.</p>
+                    </div>
+                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                        <h4 class="font-semibold text-slate-700 mb-1">Thời gian đã xếp</h4>
+                        <p class="text-sm text-slate-600">Chưa xếp lịch</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SHEET GIÁO DỤC KINH TẾ VÀ PHÁP LUẬT -->
+        <div id="content-ktpl" class="sheet-content hidden">
+            <div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-200">
+                <div class="flex items-center space-x-3 mb-4 pb-3 border-b border-slate-100">
+                    <i class="fa-solid fa-scale-balanced text-2xl text-orange-600"></i>
+                    <h2 class="text-xl font-bold text-slate-800">Không gian môn Giáo dục kinh tế và pháp luật</h2>
+                </div>
+                <p class="text-slate-600 mb-4">Nội dung học tập, tài liệu và ghi chú riêng dành cho môn Giáo dục kinh tế và pháp luật.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="p-4 rounded-xl bg-orange-50 border border-orange-100">
+                        <h4 class="font-semibold text-orange-900 mb-1">Mục tiêu hôm nay</h4>
+                        <p class="text-sm text-orange-700">Ôn tập nội dung trọng tâm môn Giáo dục kinh tế và pháp luật.</p>
+                    </div>
+                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                        <h4 class="font-semibold text-slate-700 mb-1">Thời gian đã xếp</h4>
+                        <p class="text-sm text-slate-600">Chưa xếp lịch</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SHEET GIÁO DỤC QUỐC PHÒNG VÀ AN NINH -->
+        <div id="content-gdqp" class="sheet-content hidden">
+            <div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-200">
+                <div class="flex items-center space-x-3 mb-4 pb-3 border-b border-slate-100">
+                    <i class="fa-solid fa-shield-halved text-2xl text-red-600"></i>
+                    <h2 class="text-xl font-bold text-slate-800">Không gian môn Giáo dục quốc phòng và an ninh</h2>
+                </div>
+                <p class="text-slate-600 mb-4">Nội dung học tập, tài liệu và ghi chú riêng dành cho môn Giáo dục quốc phòng và an ninh.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="p-4 rounded-xl bg-red-50 border border-red-100">
+                        <h4 class="font-semibold text-red-900 mb-1">Mục tiêu hôm nay</h4>
+                        <p class="text-sm text-red-700">Ôn tập nội dung trọng tâm môn Giáo dục quốc phòng và an ninh.</p>
+                    </div>
+                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                        <h4 class="font-semibold text-slate-700 mb-1">Thời gian đã xếp</h4>
+                        <p class="text-sm text-slate-600">Chưa xếp lịch</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SHEET CÔNG NGHỆ -->
+        <div id="content-congnghe" class="sheet-content hidden">
+            <div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-200">
+                <div class="flex items-center space-x-3 mb-4 pb-3 border-b border-slate-100">
+                    <i class="fa-solid fa-gears text-2xl text-fuchsia-600"></i>
+                    <h2 class="text-xl font-bold text-slate-800">Không gian môn Công nghệ</h2>
+                </div>
+                <p class="text-slate-600 mb-4">Nội dung học tập, tài liệu và ghi chú riêng dành cho môn Công nghệ.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="p-4 rounded-xl bg-fuchsia-50 border border-fuchsia-100">
+                        <h4 class="font-semibold text-fuchsia-900 mb-1">Mục tiêu hôm nay</h4>
+                        <p class="text-sm text-fuchsia-700">Ôn tập nội dung trọng tâm môn Công nghệ.</p>
+                    </div>
+                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                        <h4 class="font-semibold text-slate-700 mb-1">Thời gian đã xếp</h4>
+                        <p class="text-sm text-slate-600">Chưa xếp lịch</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+    <!-- KHUNG HIỂN THỊ LỊCH SỬ CHAT VỚI AI -->
+    <div id="chatContainer" class="max-w-4xl mx-auto w-full px-4 pb-44 space-y-3">
+        <!-- Tin nhắn chào mừng mặc định từ AI -->
+        <div class="flex items-start space-x-3">
+            <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0 font-bold text-xs shadow" title="Blue Hour">BH</div>
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 text-sm text-slate-700 max-w-2xl">
+                Xin chào! Tôi là Blue Hour, trợ lý AI học tập của bạn. Tôi có thể giúp bạn giải đáp kiến thức, gợi ý bài tập hoặc tìm kiếm thông tin liên quan đến môn học bạn đang mở. Hãy thử hỏi tôi nhé!
+            </div>
+        </div>
+    </div>
+
+    <!-- BOTTOM CHAT BAR & ACTION BUTTONS -->
+    <div class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-lg p-4 z-30">
+        <div class="max-w-4xl mx-auto flex flex-col space-y-2">
+            
+            <!-- 3 NÚT TƯỢNG TRƯNG PHÍA TRÊN BÊN PHẢI THÀNH CHAT -->
+            <div class="flex justify-end items-center space-x-3 pr-1">
+                <!-- 1. Gợi ý bài tập (Bóng đèn) -->
+                <button onclick="handleAction('goc-bai-tap')" title="Gợi ý bài tập" class="w-10 h-10 rounded-full bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-600 flex items-center justify-center transition shadow-sm hover:scale-105 active:scale-95">
+                    <i class="fa-solid fa-lightbulb text-lg"></i>
+                </button>
+                
+                <!-- 2. Gợi ý dạng bài (Sơ đồ / Phân loại) -->
+                <button onclick="handleAction('goc-dang-bai')" title="Gợi ý dạng bài" class="w-10 h-10 rounded-full bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-600 flex items-center justify-center transition shadow-sm hover:scale-105 active:scale-95">
+                    <i class="fa-solid fa-sitemap text-lg"></i>
+                </button>
+                
+                <!-- 3. Tìm kiếm bài tập (Kính lúp) -->
+                <button onclick="handleAction('tim-kiem')" title="Tìm kiếm bài tập" class="w-10 h-10 rounded-full bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-600 flex items-center justify-center transition shadow-sm hover:scale-105 active:scale-95">
+                    <i class="fa-solid fa-magnifying-glass text-lg"></i>
+                </button>
+            </div>
+
+            <!-- INPUT CHAT -->
+            <div class="flex items-center space-x-2">
+                <div class="relative flex-1">
+                    <input type="text" id="chatInput" placeholder="Nhập câu hỏi hoặc yêu cầu trợ giúp học tập..." 
+                        class="w-full pl-4 pr-10 py-3 bg-slate-100 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white text-slate-800 transition">
+                    <button class="absolute right-3 top-3 text-slate-400 hover:text-blue-600">
+                        <i class="fa-solid fa-paperclip"></i>
+                    </button>
+                </div>
+                <button onclick="sendMessage()" class="px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-md hover:shadow-lg font-medium transition flex items-center">
+                    <span class="hidden sm:inline mr-2">Gửi</span>
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+    // 1. Hàm chuyển đổi giữa các sheet môn học
+        function switchSheet(subjectCode) {
+            const contents = document.querySelectorAll('.sheet-content');
+            contents.forEach(el => el.classList.add('hidden'));
+
+            const tabs = document.querySelectorAll('.sheet-tab');
+            tabs.forEach(el => el.classList.remove('active'));
+
+            const targetContent = document.getElementById(`content-${subjectCode}`);
+            if (targetContent) targetContent.classList.remove('hidden');
+
+            const targetTab = document.getElementById(`tab-${subjectCode}`);
+            if (targetTab) targetTab.classList.add('active');
+
+            const folderDropdown = document.getElementById('folderDropdown');
+            if (folderDropdown) folderDropdown.classList.add('hidden');
+        }
+
+        // 2. Khởi tạo dữ liệu khi trang tải xong
+        document.addEventListener('DOMContentLoaded', function() {
+            // [MỚI] Lớp là bắt buộc: chưa chọn lớp thì quay về trang lập kế hoạch
+            const savedGrade = localStorage.getItem('userGrade');
+            if (!['10', '11', '12'].includes(savedGrade)) {
+                window.location.href = 'study-plan.html';
+                return;
+            }
+            const gradeBadge = document.getElementById('gradeBadge');
+            gradeBadge.textContent = 'Lớp ' + savedGrade;
+            gradeBadge.classList.remove('hidden');
+
+            const savedSubjects = JSON.parse(localStorage.getItem('userSelectedSubjects')) || ['toan', 'li', 'hoa', 'anh', 'van', 'su', 'dia', 'sinh', 'tin', 'ktpl', 'gdqp', 'congnghe'];
+            const planDetails = JSON.parse(localStorage.getItem('userStudyPlanDetails')) || {};
+            const allSubjects = ['toan', 'li', 'hoa', 'anh', 'van', 'su', 'dia', 'sinh', 'tin', 'ktpl', 'gdqp', 'congnghe'];
+
+            allSubjects.forEach(code => {
+                const tabEl = document.getElementById(`tab-${code}`);
+                const contentEl = document.getElementById(`content-${code}`);
+                const dropdownBtn = document.querySelector(`#folderDropdown button[onclick="switchSheet('${code}')"]`);
+
+                if (savedSubjects.includes(code)) {
+                    if (tabEl) tabEl.style.display = '';
+                    if (dropdownBtn) dropdownBtn.style.display = '';
+
+                    if (planDetails[code] && contentEl) {
+                        const details = planDetails[code];
+                        const timeContainer = contentEl.querySelector('.grid.grid-cols-1');
+                        if (timeContainer) {
+                            timeContainer.innerHTML = `
+                                <div class="p-4 rounded-xl bg-blue-50 border border-blue-100">
+                                    <h4 class="font-semibold text-blue-900 mb-1">Nội dung / Ghi chú</h4>
+                                    <p class="text-sm text-blue-700">${details.note || 'Không có ghi chú riêng'}</p>
+                                </div>
+                                <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                                    <h4 class="font-semibold text-slate-700 mb-1">Thời gian đã xếp</h4>
+                                    <p class="text-sm text-slate-600">${details.start} - ${details.end}</p>
+                                </div>
+                            `;
+                        }
+                    }
+                } else {
+                    if (tabEl) tabEl.style.display = 'none';
+                    if (contentEl) contentEl.classList.add('hidden');
+                    if (dropdownBtn) dropdownBtn.style.display = 'none';
+                }
+            });
+
+            if (savedSubjects.length > 0) {
+                switchSheet(savedSubjects[0]);
+            }
+        });
+
+        // 3. Hàm đổi kế hoạch học tập
+        function resetStudyPlan() {
+            if (confirm("Bạn có chắc chắn muốn thay đổi lại môn học và thời gian biểu không?")) {
+                localStorage.removeItem('hasCompletedPlan');
+                window.location.href = 'study-plan.html';
+            }
+        }
+
+        // 4. Menu thư mục và các nút chức năng nhanh (3 nút trên thanh chat)
+        function toggleFolderMenu() {
+            const dropdown = document.getElementById('folderDropdown');
+            dropdown.classList.toggle('hidden');
+        }
+
+        window.addEventListener('click', function(e) {
+            const btn = document.getElementById('folderBtn');
+            const dropdown = document.getElementById('folderDropdown');
+            if (btn && dropdown && !btn.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        function handleAction(type) {
+            const chatInput = document.getElementById('chatInput');
+            if (!chatInput) return;
+            if (type === 'goc-bai-tap') {
+                chatInput.value = "Gợi ý cho tôi một số bài tập luyện tập trong môn này đi!";
+            } else if (type === 'goc-dang-bai') {
+                chatInput.value = "Phân tích và gợi ý các dạng bài chính của môn này.";
+            } else if (type === 'tim-kiem') {
+                chatInput.value = "Tìm kiếm tài liệu và bài tập liên quan đến nội dung học.";
+            }
+            chatInput.focus();
+        }
+
+        // =========================================================================
+        // 5. LOGIC TRỢ LÝ AI THÔNG MINH (THU THẬP DỮ LIỆU SHEET & LỌC CÂU HỎI MÔN HỌC)
+        // =========================================================================
+        
+        // Hàm thu thập thông tin động từ Sheet đang hiển thị
+        function getActiveSheetData() {
+            // Tìm sheet đang active hiện tại
+            const activeTab = document.querySelector('.sheet-tab.active');
+            if (!activeTab) return { name: "Chung", note: "", time: "", grade: localStorage.getItem('userGrade') || "" };
+
+            let subjectCode = activeTab.id.replace('tab-', '');
+            let subjectName = activeTab.innerText.replace('Môn: ', '').trim();
+            
+            const contentEl = document.getElementById(`content-${subjectCode}`);
+            let note = "Không có ghi chú";
+            let time = "Chưa xếp lịch";
+
+            if (contentEl) {
+                const paragraphs = contentEl.querySelectorAll('p');
+                if (paragraphs.length >= 2) {
+                    // Lấy nội dung ghi chú và thời gian đã được render từ localStorage
+                    const noteBox = contentEl.querySelector('.bg-blue-50 p, .bg-indigo-50 p, .bg-teal-50 p, .bg-cyan-50 p, .bg-rose-50 p, .bg-amber-50 p, .bg-emerald-50 p, .bg-green-50 p, .bg-violet-50 p, .bg-orange-50 p, .bg-red-50 p, .bg-fuchsia-50 p');
+                    const timeBox = contentEl.querySelector('.bg-slate-50 p');
+                    if (noteBox) note = noteBox.innerText;
+                    if (timeBox) time = timeBox.innerText;
+                }
+            }
+
+            return { code: subjectCode, name: subjectName, note: note, time: time, grade: localStorage.getItem('userGrade') || '' };
+        }
+
+        function sendMessage() {
+            const chatInput = document.getElementById('chatInput');
+            const chatContainer = document.getElementById('chatContainer');
+            const question = chatInput.value.trim();
+
+            if (question === '') return;
+
+            // Hiển thị tin nhắn của người dùng lên khung chat
+            appendMessage(question, 'user');
+            chatInput.value = '';
+
+            // Tạo hiệu ứng AI đang suy nghĩ...
+            const loadingId = appendMessage("Đang phân tích dữ liệu môn học...", 'ai', true);
+
+            setTimeout(() => {
+                removeMessage(loadingId);
+                const aiResponse = generateAIResponse(question);
+                appendMessage(aiResponse, 'ai');
+            }, 1000);
+        }
+
+        // Hiển thị bong bóng chat ra giao diện
+        function appendMessage(text, sender, isLoading = false) {
+            const chatContainer = document.getElementById('chatContainer');
+            const msgId = 'msg_' + Date.now();
+            const div = document.createElement('div');
+            div.id = msgId;
+            div.className = `flex items-start space-x-3 ${sender === 'user' ? 'justify-end' : ''}`;
+
+            if (sender === 'user') {
+                div.innerHTML = `
+                    <div class="bg-blue-600 text-white p-4 rounded-2xl shadow-sm text-sm max-w-2xl">
+                        ${text}
+                    </div>
+                    <div class="w-8 h-8 rounded-full bg-slate-700 text-white flex items-center justify-center shrink-0 font-bold text-xs shadow">Bạn</div>
+                `;
+            } else {
+                div.innerHTML = `
+                    <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0 font-bold text-xs shadow" title="Blue Hour">BH</div>
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 text-sm text-slate-700 max-w-2xl ${isLoading ? 'italic text-slate-400 animate-pulse' : ''}">
+                        ${text}
+                    </div>
+                `;
+            }
+
+            chatContainer.appendChild(div);
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+            return msgId;
+        }
+
+        function removeMessage(id) {
+            const el = document.getElementById(id);
+            if (el) el.remove();
+        }
+
+        // Bộ lọc thông minh của AI: Kiểm tra tính liên quan đến học tập & Phân tích ngữ cảnh Sheet
+        function generateAIResponse(question) {
+            const lowerQ = question.toLowerCase();
+            
+            // 1. Kiểm tra xem câu hỏi có thuộc phạm vi học tập / môn học hay không
+            const studyKeywords = [
+                'toan', 'lý', 'vật lý', 'hóa', 'hóa học', 'anh', 'tiếng anh', 
+                'bài tập', 'công thức', 'giải', 'dạng bài', 'từ vựng', 'phương trình', 
+                'ôn tập', 'mục tiêu', 'ghi chú', 'thời gian', 'học', 'gợi ý', 'tìm kiếm', 'sách', 'tài liệu'
+            ];
+
+            const isStudyRelated = studyKeywords.some(keyword => lowerQ.includes(keyword)) || 
+                                lowerQ.includes('?') || 
+                                lowerQ.length > 5; // Cho phép các câu hỏi tự nhiên dài
+
+            if (!isStudyRelated) {
+                return "⚠️ Xin lỗi, tôi là Blue Hour, trợ lý AI chuyên hỗ trợ học tập. Tôi chỉ có thể trả lời các câu hỏi liên quan đến kiến thức môn học, bài tập hoặc kế hoạch học tập của bạn thôi nhé!";
+            }
+
+            // 2. Thu thập dữ liệu từ Sheet hiện tại đang mở
+            const currentSheet = getSheetDataByQuery(lowerQ);
+
+            // 3. Xử lý các chức năng tương ứng với 3 nút bấm hoặc câu hỏi cụ thể
+            if (lowerQ.includes('gợi ý cho tôi một số bài tập') || lowerQ.includes('bài tập')) {
+                return `📚 **Gợi ý bài tập cho môn ${currentSheet.name}:**<br>` +
+                    `- Dựa trên ghi chú mục tiêu của bạn (*"${currentSheet.note}"*):<br>` +
+                    `1. Bài tập cơ bản luyện tập SGK chương hiện tại.<br>` +
+                    `2. Bài tập nâng cao phát triển tư duy.<br>` +
+                    `⏱ Khung giờ học đã xếp: <b>${currentSheet.time}</b>. Hãy tập trung hoàn thành nhé!`;
+            } 
+            
+            if (lowerQ.includes('dạng bài') || lowerQ.includes('phân tích')) {
+                return `📊 **Phân tích các dạng bài trọng tâm môn ${currentSheet.name}:**<br>` +
+                    `- Nội dung trọng tâm theo kế hoạch: <i>${currentSheet.note}</i><br>` +
+                    `• Dạng 1: Câu hỏi lý thuyết nhận biết.<br>` +
+                    `• Dạng 2: Bài tập tính toán/thực hành cơ bản.<br>` +
+                    `• Dạng 3: Bài toán vận dụng cao liên hệ thực tế.`;
+            }
+
+            if (lowerQ.includes('tìm kiếm') || lowerQ.includes('tài liệu')) {
+                return `🔍 **Kết quả tìm kiếm tài liệu cho môn ${currentSheet.name}:**<br>` +
+                    `- Đã quét dữ liệu từ mục tiêu: <i>"${currentSheet.note}"</i><br>` +
+                    `• Đề cương ôn tập chi tiết.<br>` +
+                    `• Video bài giảng minh họa & sơ đồ tư duy tóm tắt công thức.`;
+            }
+
+            // 4. Phản hồi thông minh chung khi người dùng hỏi các câu hỏi chuyên môn theo môn hiện tại
+            return `💡 **Hỗ trợ môn ${currentSheet.name}** (Khung giờ: ${currentSheet.time}):<br>` +
+                `Về yêu cầu: <i>"${question}"</i><br>` +
+                `Dựa trên nội dung học tập bạn đã lưu (<b>${currentSheet.note}</b>), bạn hãy chia nhỏ thời gian để giải quyết từng phần, nắm chắc lý thuyết trước khi làm bài tập vận dụng nhé! Bạn có cần tôi giải chi tiết bài toán nào không?`;
+        }
+
+        // Tự động nhận diện môn học nếu người dùng gõ trực tiếp tên môn trong câu hỏi
+        function getSheetDataByQuery(query) {
+            const activeData = getActiveSheetData();
+            if (query.includes('toán')) return { name: 'Toán', note: 'Giải bài tập Đại số & Hình học', time: activeData.time };
+            if (query.includes('lý') || query.includes('vật lý')) return { name: 'Vật Lý', note: 'Ôn tập công thức cơ học', time: activeData.time };
+            if (query.includes('hóa')) return { name: 'Hóa Học', note: 'Cân bằng phương trình phản ứng', time: activeData.time };
+            if (query.includes('anh')) return { name: 'Tiếng Anh', note: 'Học từ vựng & Reading', time: activeData.time };
+            
+            return activeData; // Mặc định lấy theo Sheet đang mở trên giao diện
+        }
+        // Bổ sung hàm mô phỏng AI thu thập bài tập và thông tin từ không gian mạng
+        async function fetchOnlineStudyData(subjectCode, queryType) {
+            // Trong thực tế, bạn có thể thay thế bằng API gọi đến ChatGPT, Gemini hoặc server riêng
+            // Dưới đây là cơ sở dữ liệu giả lập kiến thức từ internet cho từng môn
+            const onlineDatabase = {
+                'toan': {
+                    exercises: [
+                        "1. Giải phương trình bậc hai: $2x^2 - 4x - 6 = 0$",
+                        "2. Tìm giá trị lớn nhất của hàm số $y = -x^2 + 4x - 1$",
+                        "3. Chứng minh hệ thức lượng trong tam giác vuông."
+                    ],
+                    theory: "Tổng hợp các dạng toán Đại số và Hình học lớp chuyên đề."
+                },
+                'li': {
+                    exercises: [
+                        "1. Một vật dao động điều hòa với phương trình $x = 5\\cos(10\\pi t)$ (cm. Tính biên độ và tần số.",
+                        "2. Tính điện trở tương đương của đoạn mạch gồm ba điện trở mắc nối tiếp.",
+                        "3. Bài tập định luật bảo toàn cơ năng."
+                    ],
+                    theory: "Tài liệu ôn tập các công thức Cơ học chất lưu và Chuyển động cơ học."
+                },
+                'hoa': {
+                    exercises: [
+                        "1. Cân bằng phương trình: $Fe + H_2SO_4 \\rightarrow Fe_2(SO_4)_3 + SO_2 + H_2O$",
+                        "2. Tính thể tích khí thu được ở điều kiện chuẩn khi cho m(g) kẽm tác dụng với dung dịch HCl dư."
+                    ],
+                    theory: "Hệ thống lý thuyết Phản ứng Oxy hóa - Khử và các nguyên tố hóa học."
+                },
+                'anh': {
+                    exercises: [
+                        "1. Chia động từ trong ngoặc thì Hiện tại hoàn thành tiếp diễn.",
+                        "2. Bài tập đọc hiểu (Reading Comprehension) chủ đề Environment (20 từ vựng nâng cao)."
+                    ],
+                    theory: "Bộ sưu tập cấu trúc ngữ pháp và bài tập luyện thi Reading Part 2."
+                }
+            };
+
+            return onlineDatabase[subjectCode] || { exercises: ["Đang cập nhật bài tập từ hệ thống mạng..."], theory: "Đang tổng hợp tài liệu." };
+        }
+    </script>
+    <script src="study-ai.js"></script>
+</body>
+</html>
