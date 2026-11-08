@@ -83,7 +83,7 @@ const app = express();
 app.use(express.json({ limit: '100kb' }));
 app.use(cookieParser());
  
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const USER_RE = /^[a-zA-Z0-9_.-]{3,30}$/;
 const publicUser = (u) => ({ id: u.id, fullName: u.full_name, email: u.email });
  
 function setAuthCookie(res, user, remember) {
@@ -124,8 +124,8 @@ app.post('/api/register', authLimiter, (req, res) => {
  
   if (fullName.length < 2 || fullName.length > 100)
     return res.status(400).json({ error: 'Họ và tên phải từ 2 đến 100 ký tự' });
-  if (!EMAIL_RE.test(email) || email.length > 254)
-    return res.status(400).json({ error: 'Email không hợp lệ' });
+  if (!USER_RE.test(email))
+    return res.status(400).json({ error: 'Tên đăng nhập phải từ 3 đến 30 ký tự (chữ, số, _ . -)' });
   if (password.length < 6 || password.length > 72)
     return res.status(400).json({ error: 'Mật khẩu phải từ 6 đến 72 ký tự' });
   if (stmts.byEmail.get(email))
