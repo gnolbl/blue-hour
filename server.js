@@ -83,7 +83,8 @@ const app = express();
 app.use(express.json({ limit: '100kb' }));
 app.use(cookieParser());
  
-const USER_RE = /^[a-zA-Z0-9_.-]{3,30}$/;
+// Tên đăng nhập: 3-100 ký tự gồm chữ, số, _ . - @ (vẫn cho phép dùng email nếu muốn)
+const USER_RE = /^[a-zA-Z0-9_.@-]{3,100}$/;
 const publicUser = (u) => ({ id: u.id, fullName: u.full_name, email: u.email });
  
 function setAuthCookie(res, user, remember) {
@@ -125,11 +126,11 @@ app.post('/api/register', authLimiter, (req, res) => {
   if (fullName.length < 2 || fullName.length > 100)
     return res.status(400).json({ error: 'Họ và tên phải từ 2 đến 100 ký tự' });
   if (!USER_RE.test(email))
-    return res.status(400).json({ error: 'Tên đăng nhập phải từ 3 đến 30 ký tự (chữ, số, _ . -)' });
+    return res.status(400).json({ error: 'Tên đăng nhập phải từ 3 đến 100 ký tự (chữ, số, _ . - @), không có dấu cách' });
   if (password.length < 6 || password.length > 72)
     return res.status(400).json({ error: 'Mật khẩu phải từ 6 đến 72 ký tự' });
   if (stmts.byEmail.get(email))
-    return res.status(409).json({ error: 'Email này đã được đăng ký' });
+    return res.status(409).json({ error: 'Tên đăng nhập này đã được đăng ký' });
  
   const hash = bcrypt.hashSync(password, 12);
   const info = stmts.insertUser.run(fullName, email, hash);
@@ -142,9 +143,9 @@ app.post('/api/login', authLimiter, (req, res) => {
   const remember = !!req.body.remember;
  
   const user = stmts.byEmail.get(email);
-  // Thông báo chung để không lộ email nào đã tồn tại
+  // Thông báo chung để không lộ tên đăng nhập nào đã tồn tại
   if (!user || !bcrypt.compareSync(password, user.password_hash))
-    return res.status(401).json({ error: 'Email hoặc mật khẩu không đúng' });
+    return res.status(401).json({ error: 'Tên đăng nhập hoặc mật khẩu không đúng' });
  
   stmts.touchLogin.run(user.id);
   setAuthCookie(res, user, remember);
