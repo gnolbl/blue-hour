@@ -22,25 +22,6 @@ const MODE_PROMPTS = {
   chat: 'Trả lời trực tiếp câu hỏi học tập, giải thích dễ hiểu, giải từng bước nếu là bài tập.',
 };
  
-// ---------- Lớp và môn học (tên môn phải trùng với tên tab môn trong study.html) ----------
-const GRADES = ['10', '11', '12'];
- 
-const SUBJECT_HINTS = {
-  'Toán': 'Trình bày lời giải từng bước, có công thức rõ ràng.',
-  'Vật lý': 'Nêu công thức, đơn vị, giải từng bước.',
-  'Hóa học': 'Viết phương trình phản ứng, cân bằng, nêu điều kiện phản ứng.',
-  'Tiếng Anh': 'Giải thích ngữ pháp/từ vựng bằng tiếng Việt, ví dụ bằng tiếng Anh.',
-  'Ngữ văn': 'Môn này không có đáp số: gợi ý dàn ý, luận điểm, cách phân tích, cách viết đoạn/bài nghị luận xã hội và nghị luận văn học.',
-  'Lịch sử': 'Nêu mốc thời gian, sự kiện, nguyên nhân – diễn biến – kết quả – ý nghĩa.',
-  'Địa lí': 'Gắn với Atlat Địa lí Việt Nam, số liệu, biểu đồ; hướng dẫn nhận dạng biểu đồ khi có.',
-  'Sinh học': 'Giải thích cơ chế, thuật ngữ; bài tập di truyền thì giải từng bước.',
-  'Tin học': 'Có thể đưa ví dụ code ngắn; giải thích rõ khái niệm và thuật toán.',
-  'Giáo dục kinh tế và pháp luật': 'Dùng tình huống thực tế, nêu căn cứ khái niệm/quy định pháp luật hiện hành.',
-  'Giáo dục quốc phòng và an ninh': 'Bám nội dung sách giáo khoa GDQP-AN, trình bày ngắn gọn, đúng trọng tâm.',
-  'Công nghệ': 'Giải thích nguyên lí, quy trình kĩ thuật; gắn ví dụ thực tế.',
-};
-const SUBJECTS = Object.keys(SUBJECT_HINTS);
- 
 // ---------- Gọi Gemini ----------
 async function askGemini({ system, messages, search = false, json = false, maxTokens = 4096, model = GEMINI_MODEL }) {
   const body = {
@@ -106,14 +87,31 @@ async function ask(opts) {
         }
       }
     }
+    // Lỗi quá tải / hết quota => báo thông điệp thân thiện cho người dùng
+    if (isBusy(lastErr)) {
+      const err = new Error('AI hiện quá tải, vui lòng thử lại sau.');
+      err.busy = true;
+      throw err;
+    }
     throw lastErr;
   }
-  if (CLAUDE_KEY) return askClaude(opts);
+  if (CLAUDE_KEY) {
+    try {
+      return await askClaude(opts);
+    } catch (e) {
+      if (isBusy(e)) {
+        const err = new Error('AI hiện quá tải, vui lòng thử lại sau.');
+        err.busy = true;
+        throw err;
+      }
+      throw e;
+    }
+  }
   throw new Error('Chưa đặt GEMINI_API_KEY (hoặc ANTHROPIC_API_KEY) trong file .env');
 }
  
 // ---------- Bước 1: lọc câu hỏi + trích từ khoá ----------
-async function analyze(message, subject, note, grade) {
+async function analyze(message, subject, note) {
   try {
     const { text } = await ask({
       maxTokens: 600,
@@ -121,7 +119,7 @@ async function analyze(message, subject, note, grade) {
       system: 'Bạn là bộ lọc cho trợ lý học tập. Chỉ trả về JSON, không giải thích.',
       messages: [{
         role: 'user',
-        content: `Các môn hỗ trợ (lớp 10, 11, 12): ${SUBJECTS.join(', ')}. Môn đang mở: "${subject}". Lớp: "${grade || 'chưa chọn'}". Mục tiêu học: "${note}".
+        content: `Các môn hỗ trợ: Toán, Vật lý, Hóa học, Tiếng Anh. Môn đang mở: "${subject}". Mục tiêu học: "${note}".
 Câu người dùng: "${message}"
 Trả về JSON: {"on_topic": true/false, "needs_search": true/false}
 - on_topic=true nếu liên quan kiến thức, bài tập, ôn tập, phương pháp học, kế hoạch học của một môn học.
@@ -139,15 +137,12 @@ Trả về JSON: {"on_topic": true/false, "needs_search": true/false}
 // body: { message, mode, subject, note, time, history }
 async function handleChat(body) {
   if (!GEMINI_KEY && !CLAUDE_KEY) throw new Error('Chưa đặt GEMINI_API_KEY (hoặc ANTHROPIC_API_KEY) trong file .env');
-  const { message, mode = 'chat', note = '', time = '', history = [] } = body;
-  // Chỉ nhận lớp/môn hợp lệ (không cho chữ lạ lọt vào prompt)
-  const grade = GRADES.includes(String(body.grade)) ? String(body.grade) : '';
-  const subject = SUBJECTS.find(s => s.toLowerCase() === String(body.subject || '').trim().toLowerCase()) || 'Chung';
+  const { message, mode = 'chat', subject = 'Chung', note = '', time = '', history = [] } = body;
   if (!message || !message.trim()) return { reply: 'Bạn hãy nhập câu hỏi nhé.' };
  
   // 3 nút chức năng chắc chắn là học tập => bỏ bước lọc, tiết kiệm 1 lần gọi API
   const plan = mode === 'chat'
-    ? await analyze(message, subject, note, grade)
+    ? await analyze(message, subject, note)
     : { on_topic: true, needs_search: true };
  
   if (!plan.on_topic) {
@@ -157,13 +152,10 @@ async function handleChat(body) {
   const needSearch = process.env.USE_SEARCH !== 'false' &&
   (mode === 'tim-kiem' || mode === 'goc-bai-tap' || !!plan.needs_search);
  
-  const system = `Bạn là Blue Hour, trợ lý học tập trong ứng dụng, trả lời bằng tiếng Việt, chính xác, dễ hiểu, ngắn gọn.
-Môn đang mở: ${subject}. Lớp: ${grade ? 'lớp ' + grade + ' (chương trình GDPT 2018)' : 'chưa chọn'}. Mục tiêu học hôm nay: ${note || 'chưa ghi'}. Khung giờ: ${time || 'chưa xếp'}.
-Lưu ý riêng cho môn này: ${SUBJECT_HINTS[subject] || 'Trả lời đúng trọng tâm môn học.'}
+  const system = `Bạn là trợ lý học tập trong ứng dụng, trả lời bằng tiếng Việt, chính xác, dễ hiểu, ngắn gọn.
+Môn đang mở: ${subject}. Mục tiêu học hôm nay: ${note || 'chưa ghi'}. Khung giờ: ${time || 'chưa xếp'}.
 ${MODE_PROMPTS[mode] || MODE_PROMPTS.chat}
 Quy tắc:
-${grade ? `- Học sinh đã chọn LỚP ${grade}. Nếu câu hỏi không nói rõ lớp, mặc định hiểu là lớp ${grade}: bài tập, kiến thức, mức độ đều theo chương trình lớp ${grade}. Chỉ đổi sang lớp khác khi học sinh nêu rõ lớp đó trong câu hỏi.
-- Khi tra cứu internet, thêm "lớp ${grade}" vào từ khoá tìm kiếm.` : '- Chưa biết lớp của học sinh: bám chương trình lớp 10-12, nếu cần thì hỏi lại học sinh đang học lớp mấy.'}
 - Chỉ trả lời nội dung liên quan đến môn học. Nếu lạc đề, từ chối lịch sự.
 - Khi cần dữ liệu bên ngoài, hãy tra cứu internet và dựa vào kết quả tìm được. Không bịa nguồn, không bịa đường link.
 - Không chắc thì nói rõ. Dùng **in đậm** cho ý chính, không dùng bảng markdown.`;

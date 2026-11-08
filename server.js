@@ -50,11 +50,11 @@ const now = () => new Date().toISOString();
  
 const stmts = {
   insertUser: {
-    run(fullName, username, passwordHash) {
+    run(fullName, email, passwordHash) {
       const user = {
         id: store.nextId++,
         full_name: fullName,
-        username,
+        email,
         password_hash: passwordHash,
         created_at: now(),
         last_login_at: null,
@@ -64,9 +64,8 @@ const stmts = {
       return { lastInsertRowid: user.id };
     },
   },
-  // Tìm theo tên đăng nhập. Tài khoản cũ (đăng ký bằng email) vẫn đăng nhập được bằng email cũ đó.
-  byUsername: {
-    get: (name) => store.users.find((u) => String(u.username || u.email || '').toLowerCase() === String(name).toLowerCase()),
+  byEmail: {
+    get: (email) => store.users.find((u) => u.email.toLowerCase() === String(email).toLowerCase()),
   },
   byId: {
     get: (id) => store.users.find((u) => u.id === id),
@@ -81,13 +80,11 @@ const stmts = {
  
 // ---------- App ----------
 const app = express();
-app.set('trust proxy', 1);
 app.use(express.json({ limit: '100kb' }));
 app.use(cookieParser());
  
-// Tên đăng nhập: 3-30 ký tự, chỉ gồm chữ không dấu, số, dấu chấm, gạch dưới, gạch ngang
-const USERNAME_RE = /^[a-z0-9._-]{3,30}$/;
-const publicUser = (u) => ({ id: u.id, fullName: u.full_name, username: u.username || u.email });
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const publicUser = (u) => ({ id: u.id, fullName: u.full_name, email: u.email });
  
 function setAuthCookie(res, user, remember) {
   const maxAge = remember ? 30 * 24 * 3600 * 1000 : 24 * 3600 * 1000;
@@ -122,32 +119,32 @@ const authLimiter = rateLimit({
  
 app.post('/api/register', authLimiter, (req, res) => {
   const fullName = String(req.body.fullName || '').trim();
-  const username = String(req.body.username || '').trim().toLowerCase();
+  const email = String(req.body.email || '').trim().toLowerCase();
   const password = String(req.body.password || '');
  
   if (fullName.length < 2 || fullName.length > 100)
     return res.status(400).json({ error: 'Họ và tên phải từ 2 đến 100 ký tự' });
-  if (!USERNAME_RE.test(username))
-    return res.status(400).json({ error: 'Tên đăng nhập phải từ 3 đến 30 ký tự, chỉ gồm chữ không dấu, số, dấu chấm, gạch dưới hoặc gạch ngang' });
+  if (!EMAIL_RE.test(email) || email.length > 254)
+    return res.status(400).json({ error: 'Email không hợp lệ' });
   if (password.length < 6 || password.length > 72)
     return res.status(400).json({ error: 'Mật khẩu phải từ 6 đến 72 ký tự' });
-  if (stmts.byUsername.get(username))
-    return res.status(409).json({ error: 'Tên đăng nhập này đã được sử dụng' });
+  if (stmts.byEmail.get(email))
+    return res.status(409).json({ error: 'Email này đã được đăng ký' });
  
   const hash = bcrypt.hashSync(password, 12);
-  const info = stmts.insertUser.run(fullName, username, hash);
-  res.status(201).json({ message: 'Đăng ký thành công', user: { id: info.lastInsertRowid, fullName, username } });
+  const info = stmts.insertUser.run(fullName, email, hash);
+  res.status(201).json({ message: 'Đăng ký thành công', user: { id: info.lastInsertRowid, fullName, email } });
 });
  
 app.post('/api/login', authLimiter, (req, res) => {
-  const username = String(req.body.username || req.body.email || '').trim().toLowerCase();
+  const email = String(req.body.email || '').trim().toLowerCase();
   const password = String(req.body.password || '');
   const remember = !!req.body.remember;
  
-  const user = stmts.byUsername.get(username);
-  // Thông báo chung để không lộ tên đăng nhập nào đã tồn tại
+  const user = stmts.byEmail.get(email);
+  // Thông báo chung để không lộ email nào đã tồn tại
   if (!user || !bcrypt.compareSync(password, user.password_hash))
-    return res.status(401).json({ error: 'Tên đăng nhập hoặc mật khẩu không đúng' });
+    return res.status(401).json({ error: 'Email hoặc mật khẩu không đúng' });
  
   stmts.touchLogin.run(user.id);
   setAuthCookie(res, user, remember);
@@ -173,6 +170,7 @@ app.post('/api/chat', requireAuth, chatLimiter, async (req, res) => {
     res.json(await handleChat(req.body));
   } catch (e) {
     console.error(e);
+    if (e.busy) return res.status(503).json({ reply: '⚠️ ' + e.message, sources: [] });
     res.status(500).json({ reply: 'Lỗi: ' + e.message });
   }
 });
