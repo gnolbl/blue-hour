@@ -119,6 +119,7 @@ const authLimiter = rateLimit({
 });
  
 app.post('/api/register', authLimiter, (req, res) => {
+  console.log('[register] nhận được:', { ...req.body, password: '***', confirmPassword: '***' });
   const fullName = String(req.body.fullName || '').trim();
   const email = String(req.body.email || '').trim().toLowerCase();
   const password = String(req.body.password || '');
