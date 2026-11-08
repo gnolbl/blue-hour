@@ -65,7 +65,7 @@ const stmts = {
     },
   },
   byEmail: {
-    get: (email) => store.users.find((u) => u.email.toLowerCase() === String(email).toLowerCase()),
+    get: (email) => store.users.find((u) => String(u.email || u.username || '').toLowerCase() === String(email).toLowerCase()),
   },
   byId: {
     get: (id) => store.users.find((u) => u.id === id),
@@ -85,6 +85,9 @@ app.use(cookieParser());
  
 // Tên đăng nhập: 3-100 ký tự gồm chữ, số, _ . - @ (vẫn cho phép dùng email nếu muốn)
 const USER_RE = /^[a-zA-Z0-9_.@-]{3,100}$/;
+// Trang web có thể gửi tên đăng nhập bằng nhiều tên trường khác nhau, nhận hết
+const pickUsername = (b = {}) =>
+  String(b.email ?? b.username ?? b.userName ?? b.user ?? b.login ?? b.account ?? '').trim().toLowerCase();
 const publicUser = (u) => ({ id: u.id, fullName: u.full_name, email: u.email });
  
 function setAuthCookie(res, user, remember) {
@@ -120,8 +123,8 @@ const authLimiter = rateLimit({
  
 app.post('/api/register', authLimiter, (req, res) => {
   console.log('[register] nhận được:', { ...req.body, password: '***', confirmPassword: '***' });
-  const fullName = String(req.body.fullName || '').trim();
-  const email = String(req.body.email || '').trim().toLowerCase();
+  const fullName = String(req.body.fullName ?? req.body.fullname ?? req.body.name ?? '').trim();
+  const email = pickUsername(req.body);
   const password = String(req.body.password || '');
  
   if (fullName.length < 2 || fullName.length > 100)
@@ -139,7 +142,7 @@ app.post('/api/register', authLimiter, (req, res) => {
 });
  
 app.post('/api/login', authLimiter, (req, res) => {
-  const email = String(req.body.email || '').trim().toLowerCase();
+  const email = pickUsername(req.body);
   const password = String(req.body.password || '');
   const remember = !!req.body.remember;
  
@@ -185,4 +188,3 @@ app.use((err, req, res, next) => {
 });
  
 app.listen(PORT, () => console.log(`Blue Hour server chạy tại http://localhost:${PORT}`));
- 

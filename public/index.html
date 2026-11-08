@@ -11,21 +11,15 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
  
   <script>
-    // Tự động kiểm tra phiên đăng nhập và trạng thái kế hoạch học tập
-    (async () => {
+    // Còn phiên đăng nhập hợp lệ (đã tick "Ghi nhớ đăng nhập") => vào thẳng trang học.
+    // Phải chạy sau khi trang tải xong, vì hàm api() nằm ở thẻ <script> phía dưới.
+    window.addEventListener('DOMContentLoaded', async () => {
       try {
-        const { user } = await api('/api/me');
-        showWelcome(user);
-        
-        // Kiểm tra nếu user đã từng hoàn thành việc lập kế hoạch study-plan
-        const hasCompletedPlan = localStorage.getItem('hasCompletedPlan');
-        if (hasCompletedPlan === 'true') {
-          setTimeout(() => {
-          window.location.href = 'study.html';
-          }, 800); // Chuyển hướng mượt mà sau khi nhận diện phiên đăng nhập hợp lệ
-        }
+        await api('/api/me');
+        const done = localStorage.getItem('hasCompletedPlan') === 'true';
+        window.location.replace(done ? 'study.html' : 'study-plan.html');
       } catch {}
-    })();
+    });
     tailwind.config = {
       theme: {
         extend: {
@@ -120,7 +114,7 @@
             <label class="block text-xs font-medium text-slate-300 mb-1.5">Tên đăng nhập</label>
             <div class="glass-input rounded-xl flex items-center px-3.5 py-2.5 focus-within:ring-2 focus-within:ring-brand-500/50">
               <i class="fa-regular fa-user text-slate-400 text-sm mr-3"></i>
-              <input type="text" id="login-username" required placeholder="Nhập tên đăng nhập" autocomplete="username" autocapitalize="none" spellcheck="false" class="w-full bg-transparent text-sm text-white focus:outline-none placeholder-slate-500">
+              <input type="text" id="login-email" required placeholder="Nhập tên đăng nhập" autocomplete="username" class="w-full bg-transparent text-sm text-white focus:outline-none placeholder-slate-500">
             </div>
           </div>
  
@@ -149,6 +143,20 @@
             <i class="fa-solid fa-arrow-right ml-2 text-xs"></i>
           </button>
         </form>
+ 
+        <div class="relative my-6 text-center">
+          <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-slate-700/60"></div></div>
+          <span class="relative px-3 bg-slate-900/90 text-[11px] text-slate-400 uppercase tracking-wider rounded-full border border-white/5">Hoặc tiếp tục với</span>
+        </div>
+ 
+        <div class="grid grid-cols-2 gap-3">
+          <button type="button" onclick="handleSocialAuth('Google')" class="flex items-center justify-center gap-2 py-2.5 px-4 glass-input rounded-xl hover:bg-slate-800/80 transition text-xs font-medium text-slate-200">
+            <i class="fa-brands fa-google text-rose-500 text-base"></i><span>Google</span>
+          </button>
+          <button type="button" onclick="handleSocialAuth('Facebook')" class="flex items-center justify-center gap-2 py-2.5 px-4 glass-input rounded-xl hover:bg-slate-800/80 transition text-xs font-medium text-slate-200">
+            <i class="fa-brands fa-facebook text-blue-500 text-base"></i><span>Facebook</span>
+          </button>
+        </div>
       </div>
  
       <!-- ================= REGISTER FORM ================= -->
@@ -171,7 +179,7 @@
             <label class="block text-xs font-medium text-slate-300 mb-1">Tên đăng nhập</label>
             <div class="glass-input rounded-xl flex items-center px-3.5 py-2.5 focus-within:ring-2 focus-within:ring-brand-500/50">
               <i class="fa-solid fa-at text-slate-400 text-sm mr-3"></i>
-              <input type="text" id="reg-username" required minlength="3" maxlength="30" pattern="[A-Za-z0-9._\-]{3,30}" title="3-30 ký tự: chữ không dấu, số, dấu chấm, gạch dưới, gạch ngang" placeholder="3-30 ký tự, viết liền không dấu" autocomplete="username" autocapitalize="none" spellcheck="false" class="w-full bg-transparent text-sm text-white focus:outline-none placeholder-slate-500">
+              <input type="text" id="reg-email" required minlength="3" maxlength="100" pattern="[A-Za-z0-9_.@\-]+" title="Chữ, số và các ký tự _ . - @, không có dấu cách" placeholder="Nhập tên đăng nhập" autocomplete="username" class="w-full bg-transparent text-sm text-white focus:outline-none placeholder-slate-500">
             </div>
           </div>
  
@@ -204,6 +212,15 @@
               <i class="fa-solid fa-shield-halved text-slate-400 text-sm mr-3"></i>
               <input type="password" id="reg-confirm-password" required placeholder="Nhập lại mật khẩu" autocomplete="new-password" class="w-full bg-transparent text-sm text-white focus:outline-none placeholder-slate-500">
             </div>
+          </div>
+ 
+          <div class="py-1">
+            <label class="flex items-start cursor-pointer group">
+              <input type="checkbox" id="terms-check" required class="mt-0.5 w-4 h-4 rounded bg-slate-800 border-slate-600 text-brand-600 focus:ring-brand-500 focus:ring-offset-slate-900 cursor-pointer">
+              <span class="ml-2.5 text-xs text-slate-400 group-hover:text-slate-300 transition">
+                Tôi đồng ý với <a href="#" onclick="event.preventDefault(); showToast('Chính sách Điều khoản & Dịch vụ', 'info')" class="text-brand-400 hover:underline">Điều khoản dịch vụ</a> và <a href="#" onclick="event.preventDefault(); showToast('Chính sách Bảo mật thông tin', 'info')" class="text-brand-400 hover:underline">Chính sách bảo mật</a>
+              </span>
+            </label>
           </div>
  
           <button id="register-submit" type="submit" class="w-full py-3 px-4 bg-gradient-to-r from-brand-600 via-brand-500 to-cyan-500 hover:from-brand-500 hover:to-cyan-400 text-white font-semibold text-sm rounded-xl shadow-glow-blue transition-all duration-300 transform active:scale-[0.99] flex items-center justify-center">
@@ -286,7 +303,7 @@
       document.getElementById('register-form-container').classList.add('hidden-tab');
       document.getElementById('tabs').classList.add('hidden');
       document.getElementById('welcome-name').textContent = user.fullName;
-      document.getElementById('welcome-email').textContent = '@' + user.username;
+      document.getElementById('welcome-email').textContent = user.email;
       document.getElementById('welcome-container').classList.remove('hidden-tab');
     }
  
@@ -340,7 +357,7 @@
         const { user } = await api('/api/login', {
           method: 'POST',
           body: {
-            username: document.getElementById('login-username').value,
+            username: document.getElementById('login-email').value.trim(),
             password: document.getElementById('login-password').value,
             remember: document.getElementById('login-remember').checked,
           },
@@ -380,15 +397,15 @@
  
       setBusy('register-submit', true);
       try {
-        const username = document.getElementById('reg-username').value;
+        const email = document.getElementById('reg-email').value.trim();
         await api('/api/register', {
           method: 'POST',
-          body: { fullName: document.getElementById('reg-name').value, username, password: pwd },
+          body: { fullName: document.getElementById('reg-name').value, username: email, password: pwd },
         });
         showToast('Đăng ký tài khoản thành công! Hãy đăng nhập.', 'success');
         document.getElementById('register-form').reset();
         document.getElementById('strength-container').classList.add('hidden');
-        document.getElementById('login-username').value = username;
+        document.getElementById('login-email').value = email;
         setTimeout(() => switchTab('login'), 1200);
       } catch (err) {
         showToast(err.message, 'error');
@@ -401,6 +418,10 @@
       try { await api('/api/logout', { method: 'POST' }); } catch {}
       switchTab('login');
       showToast('Đã đăng xuất', 'info');
+    }
+ 
+    function handleSocialAuth(provider) {
+      showToast(`Đăng nhập qua ${provider} chưa được cấu hình trên server`, 'info');
     }
  
     // ---------- Toast ----------
@@ -425,3 +446,4 @@
   </script>
 </body>
 </html>
+ 
