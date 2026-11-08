@@ -80,6 +80,7 @@ const stmts = {
  
 // ---------- App ----------
 const app = express();
+app.set('trust proxy', 1);
 app.use(express.json({ limit: '100kb' }));
 app.use(cookieParser());
  
