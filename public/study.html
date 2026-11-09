@@ -255,46 +255,76 @@
         }
 
         // 2. Khởi tạo dữ liệu khi trang tải xong
-        document.addEventListener('DOMContentLoaded', function() {
-            const savedSubjects = JSON.parse(localStorage.getItem('userSelectedSubjects')) || ['toan', 'li', 'hoa', 'anh'];
-            const planDetails = JSON.parse(localStorage.getItem('userStudyPlanDetails')) || {};
-            const allSubjects = ['toan', 'li', 'hoa', 'anh'];
+        const SUBJECTS = {
+        toan: { name: 'Toán', icon: 'fa-calculator', c: 'blue' },
+        li: { name: 'Vật Lý', icon: 'fa-atom', c: 'indigo' },
+        hoa: { name: 'Hóa Học', icon: 'fa-flask', c: 'teal' },
+        anh: { name: 'Tiếng Anh', icon: 'fa-language', c: 'cyan' },
+        van: { name: 'Ngữ văn', icon: 'fa-book-open', c: 'rose' },
+        su: { name: 'Lịch sử', icon: 'fa-landmark', c: 'amber' },
+        dia: { name: 'Địa lí', icon: 'fa-earth-asia', c: 'emerald' },
+        sinh: { name: 'Sinh học', icon: 'fa-dna', c: 'green' },
+        tin: { name: 'Tin học', icon: 'fa-laptop-code', c: 'violet' },
+        ktpl: { name: 'Giáo dục kinh tế và pháp luật', icon: 'fa-scale-balanced', c: 'orange' },
+        gdqp: { name: 'Giáo dục quốc phòng và an ninh', icon: 'fa-shield-halved', c: 'red' },
+        congnghe: { name: 'Công nghệ', icon: 'fa-gears', c: 'fuchsia' },
+        };
+    document.addEventListener('DOMContentLoaded', function () {
+        let saved = [];
+        try { saved = JSON.parse(localStorage.getItem('userSelectedSubjects')) || []; } catch {}
+        saved = saved.filter(code => SUBJECTS[code]);
+        if (!saved.length) saved = ['toan', 'li', 'hoa', 'anh'];
+        let plan = {};
+        try { plan = JSON.parse(localStorage.getItem('userStudyPlanDetails')) || {}; } catch {}
 
-            allSubjects.forEach(code => {
-                const tabEl = document.getElementById(`tab-${code}`);
-                const contentEl = document.getElementById(`content-${code}`);
-                const dropdownBtn = document.querySelector(`#folderDropdown button[onclick*="${code}"]`);
+        const tabBar = document.querySelector('.sheet-tab').parentElement;
+        const main = document.querySelector('main');
+        const dropdown = document.getElementById('folderDropdown');
+        tabBar.innerHTML = '';
+        main.innerHTML = '';
+        dropdown.innerHTML = '<div class="px-3 py-1.5 text-xs font-semibold text-slate-400 uppercase tracking-wider">Danh sách môn học</div>';
 
-                if (savedSubjects.includes(code)) {
-                    if (tabEl) tabEl.style.display = '';
-                    if (dropdownBtn) dropdownBtn.style.display = '';
+        saved.forEach(code => {
+            const s = SUBJECTS[code];
+            const d = plan[code] || {};
 
-                    if (planDetails[code] && contentEl) {
-                        const details = planDetails[code];
-                        const timeContainer = contentEl.querySelector('.grid.grid-cols-1');
-                        if (timeContainer) {
-                            timeContainer.innerHTML = `
-                                <div class="p-4 rounded-xl bg-blue-50 border border-blue-100">
-                                    <h4 class="font-semibold text-blue-900 mb-1">Nội dung / Ghi chú</h4>
-                                    <p class="text-sm text-blue-700">${details.note || 'Không có ghi chú riêng'}</p>
-                                </div>
-                                <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
-                                    <h4 class="font-semibold text-slate-700 mb-1">Thời gian đã xếp</h4>
-                                    <p class="text-sm text-slate-600">${details.start} - ${details.end}</p>
-                                </div>
-                            `;
-                        }
-                    }
-                } else {
-                    if (tabEl) tabEl.style.display = 'none';
-                    if (contentEl) contentEl.classList.add('hidden');
-                    if (dropdownBtn) dropdownBtn.style.display = 'none';
-                }
-            });
+            tabBar.insertAdjacentHTML('beforeend', `
+            <button id="tab-${code}" onclick="switchSheet('${code}')" class="sheet-tab px-4 py-2 rounded-t-lg text-sm flex items-center space-x-2 transition text-slate-600 hover:bg-slate-50 whitespace-nowrap">
+                <i class="fa-solid ${s.icon} text-${s.c}-600"></i><span>Sheet: ${s.name}</span>
+            </button>`);
 
-            if (savedSubjects.length > 0) {
-                switchSheet(savedSubjects[0]);
-            }
+            dropdown.insertAdjacentHTML('beforeend', `
+            <button onclick="switchSheet('${code}')" class="w-full text-left px-4 py-2.5 hover:bg-blue-50 flex items-center space-x-3 text-slate-700 transition">
+                <i class="fa-solid ${s.icon} text-${s.c}-600 w-5"></i><span>Môn ${s.name}</span>
+            </button>`);
+
+            main.insertAdjacentHTML('beforeend', `
+            <div id="content-${code}" class="sheet-content hidden">
+                <div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-200">
+                <div class="flex items-center space-x-3 mb-4 pb-3 border-b border-slate-100">
+                    <i class="fa-solid ${s.icon} text-2xl text-${s.c}-600"></i>
+                    <h2 class="text-xl font-bold text-slate-800">Không gian môn ${s.name}</h2>
+                </div>
+                <p class="text-slate-600 mb-4">Nội dung học tập, tài liệu và ghi chú riêng dành cho môn ${s.name}.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="p-4 rounded-xl bg-${s.c}-50 border border-${s.c}-100">
+                    <h4 class="font-semibold text-${s.c}-900 mb-1">Nội dung / Ghi chú</h4>
+                    <p class="note-box text-sm text-${s.c}-700"></p>
+                    </div>
+                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                    <h4 class="font-semibold text-slate-700 mb-1">Thời gian đã xếp</h4>
+                    <p class="time-box text-sm text-slate-600"></p>
+                    </div>
+                </div>
+                </div>
+            </div>`);
+
+            const el = document.getElementById('content-' + code);
+            el.querySelector('.note-box').textContent = d.note || 'Không có ghi chú riêng';
+            el.querySelector('.time-box').textContent = d.start ? `${d.start} - ${d.end}` : 'Chưa xếp lịch';
+        });
+
+        switchSheet(saved[0]);
         });
 
         // 3. Hàm đổi kế hoạch học tập
